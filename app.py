@@ -2,13 +2,22 @@ from flask import Flask, render_template, request
 import tensorflow as tf
 import numpy as np
 from PIL import Image
-import gdown
 import os
+import gdown
 
 app = Flask(__name__)
 
-# Load trained model
-model = tf.keras.models.load_model("model.h5")
+# ✅ Download model from Google Drive if not exists
+MODEL_PATH = "model.h5"
+MODEL_URL = "https://drive.google.com/uc?id=1Icz6QF7OAWK8re8lNkmecVKcLUSbmlAq"
+
+if not os.path.exists(MODEL_PATH):
+    print("Downloading model...")
+    gdown.download(MODEL_URL, MODEL_PATH, quiet=False)
+
+print("Loading model...")
+model = tf.keras.models.load_model(MODEL_PATH)
+print("Model loaded successfully!")
 
 # Dataset classes
 classes = [
@@ -70,24 +79,25 @@ def predict():
         return "No file selected"
 
     # Save uploaded image
+    if not os.path.exists("static"):
+        os.makedirs("static")
+
     filepath = os.path.join("static", file.filename)
     file.save(filepath)
 
     # Image preprocessing
-    img = Image.open(filepath)
-    img = img.resize((224,224))
-    img = np.array(img)/255.0
+    img = Image.open(filepath).convert('RGB')
+    img = img.resize((224, 224))
+    img = np.array(img) / 255.0
     img = np.expand_dims(img, axis=0)
 
-    # Model prediction
+    # Prediction
     prediction = model.predict(img)
-
     index = np.argmax(prediction)
-
     result = classes[index]
 
     confidence = float(np.max(prediction)) * 100
-    confidence = round(confidence,2)
+    confidence = round(confidence, 2)
 
     # Damage estimation
     if "healthy" in result.lower():
@@ -95,7 +105,7 @@ def predict():
     else:
         damage = round(confidence)
 
-    # Insurance risk level
+    # Risk level
     if damage == 0:
         risk = "Low"
     elif damage < 40:
@@ -105,7 +115,7 @@ def predict():
     else:
         risk = "Very High"
 
-    # Treatment suggestions
+    # Treatment
     if "healthy" in result.lower():
         treatment = "No treatment required. Plant is healthy."
     elif "blight" in result.lower():
@@ -115,7 +125,7 @@ def predict():
     elif "mildew" in result.lower():
         treatment = "Improve air circulation and apply fungicide."
     else:
-        treatment = "Consult agricultural expert for treatment."
+        treatment = "Consult agricultural expert."
 
     return render_template(
         "result.html",
@@ -126,5 +136,7 @@ def predict():
         treatment=treatment,
         risk=risk
     )
+
+# Run app
 if __name__ == "__main__":
     app.run()
