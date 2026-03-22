@@ -126,7 +126,5 @@ def predict():
         treatment=treatment,
         risk=risk
     )
-
 if __name__ == "__main__":
-    if __name__ == "__main__":
     app.run()
