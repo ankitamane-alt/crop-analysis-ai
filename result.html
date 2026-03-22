@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Crop Analysis Result</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:linear-gradient(135deg,#2E7D32,#66BB6A);
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+margin:0;
+}
+
+.container{
+background:white;
+padding:40px;
+width:600px;
+border-radius:20px;
+text-align:center;
+box-shadow:0 20px 40px rgba(0,0,0,0.3);
+}
+
+h1{
+color:#2E7D32;
+}
+
+.result-box{
+margin-top:20px;
+padding:20px;
+background:#F1F8E9;
+border-radius:12px;
+}
+
+.result-box p{
+font-size:18px;
+margin:10px 0;
+}
+
+img{
+margin-top:20px;
+width:300px;
+border-radius:12px;
+box-shadow:0 5px 15px rgba(0,0,0,0.2);
+}
+
+button{
+margin-top:20px;
+padding:12px 25px;
+background:#2E7D32;
+color:white;
+border:none;
+border-radius:8px;
+font-size:16px;
+cursor:pointer;
+}
+
+button:hover{
+background:#1B5E20;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>🌾 Crop Disease Analysis Result</h1>
+
+<div class="result-box">
+
+<p><b>Disease:</b> {{ prediction }}</p>
+
+<p><b>Damage:</b> {{ damage }}%</p>
+
+<p><b>Confidence Score:</b> {{ confidence }}%</p>
+
+<p><b>Suggested Treatment:</b> {{ treatment }}</p>
+
+<p><b>Insurance Risk Level:</b> {{ risk }}</p>
+
+</div>
+
+<img src="{{ image }}">
+
+<br>
+
+<a href="/">
+<button>Analyze Another Plant</button>
+</a>
+
+</div>
+
+</body>
+</html>
