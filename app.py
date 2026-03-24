@@ -13,29 +13,33 @@ app = Flask(__name__, template_folder='templates', static_folder='static')
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 # -------------------------------
+# Model variable (IMPORTANT)
+# -------------------------------
+model = None
+
+# -------------------------------
 # Download model if not exists
 # -------------------------------
 model_url = "https://drive.google.com/uc?export=download&id=1Icz6QF7OAWK8re8lNkmecVKcLUSbmlAq"
 
 if not os.path.exists("model.h5"):
-    print("Downloading model from Google Drive...")
+    print("Downloading model...")
     gdown.download(model_url, "model.h5", quiet=False)
 
 # -------------------------------
-# Load model safely (FIXED)
+# Function to load model (LAZY LOAD)
 # -------------------------------
-try:
-    from tensorflow.keras.layers import InputLayer
-
-    model = tf.keras.models.load_model(
-        "model.h5",
-        custom_objects={"InputLayer": InputLayer},
-        compile=False
-    )
-    print("✅ Model loaded successfully")
-
-except Exception as e:
-    print("❌ Error loading model:", e)
+def load_model():
+    global model
+    if model is None:
+        print("Loading model...")
+        from tensorflow.keras.layers import InputLayer
+        model = tf.keras.models.load_model(
+            "model.h5",
+            custom_objects={"InputLayer": InputLayer},
+            compile=False
+        )
+        print("Model loaded successfully!")
 
 # -------------------------------
 # Dataset classes
@@ -66,80 +70,81 @@ def home():
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    if 'file' not in request.files:
-        return "No file uploaded"
+    try:
+        # Check file
+        if 'file' not in request.files:
+            return "No file uploaded"
 
-    file = request.files['file']
+        file = request.files['file']
 
-    if file.filename == '':
-        return "No file selected"
+        if file.filename == '':
+            return "No file selected"
 
-    # Save image
-    if not os.path.exists("static"):
-        os.makedirs("static")
+        # Create static folder if not exists
+        if not os.path.exists("static"):
+            os.makedirs("static")
 
-    filepath = os.path.join("static", file.filename)
-    file.save(filepath)
+        # Save image
+        filepath = os.path.join("static", file.filename)
+        file.save(filepath)
 
-    # -------------------------------
-    # Image preprocessing (FIXED)
-    # -------------------------------
-    img = Image.open(filepath).convert('RGB')
-    img = img.resize((224, 224))
-    img = np.array(img) / 255.0
-    img = np.expand_dims(img, axis=0)
+        # Process image
+        img = Image.open(filepath).convert('RGB')
+        img = img.resize((224, 224))
+        img = np.array(img) / 255.0
+        img = np.expand_dims(img, axis=0)
 
-    # -------------------------------
-    # Prediction
-    # -------------------------------
-    prediction = model.predict(img)
-    index = np.argmax(prediction)
-    result = classes[index]
+        # Load model (IMPORTANT FIX)
+        load_model()
 
-    confidence = round(float(np.max(prediction)) * 100, 2)
+        # Predict
+        prediction = model.predict(img)
+        index = np.argmax(prediction)
+        result = classes[index]
 
-    # -------------------------------
-    # Damage estimation
-    # -------------------------------
-    damage = 0 if "healthy" in result.lower() else round(confidence)
+        confidence = round(float(np.max(prediction)) * 100, 2)
 
-    # Risk level
-    if damage == 0:
-        risk = "Low"
-    elif damage < 40:
-        risk = "Moderate"
-    elif damage < 70:
-        risk = "High"
-    else:
-        risk = "Very High"
+        # Damage calculation
+        damage = 0 if "healthy" in result.lower() else round(confidence)
 
-    # -------------------------------
-    # Treatment suggestions
-    # -------------------------------
-    if "healthy" in result.lower():
-        treatment = "No treatment required. Plant is healthy."
-    elif "blight" in result.lower():
-        treatment = "Apply fungicide spray and remove infected leaves."
-    elif "rust" in result.lower():
-        treatment = "Use sulfur-based fungicide."
-    elif "mildew" in result.lower():
-        treatment = "Improve air circulation and apply fungicide."
-    else:
-        treatment = "Consult agricultural expert for treatment."
+        # Risk level
+        if damage == 0:
+            risk = "Low"
+        elif damage < 40:
+            risk = "Moderate"
+        elif damage < 70:
+            risk = "High"
+        else:
+            risk = "Very High"
 
-    return render_template(
-        "result.html",
-        prediction=result,
-        image=filepath,
-        damage=damage,
-        confidence=confidence,
-        treatment=treatment,
-        risk=risk
-    )
+        # Treatment
+        if "healthy" in result.lower():
+            treatment = "No treatment required. Plant is healthy."
+        elif "blight" in result.lower():
+            treatment = "Apply fungicide spray and remove infected leaves."
+        elif "rust" in result.lower():
+            treatment = "Use sulfur-based fungicide."
+        elif "mildew" in result.lower():
+            treatment = "Improve air circulation and apply fungicide."
+        else:
+            treatment = "Consult agricultural expert."
+
+        return render_template(
+            "result.html",
+            prediction=result,
+            image=filepath,
+            confidence=confidence,
+            damage=damage,
+            risk=risk,
+            treatment=treatment
+        )
+
+    except Exception as e:
+        return f"Error: {str(e)}"
 
 
 # -------------------------------
-# Run App (Render FIX)
+# Run App (Render Fix)
 # -------------------------------
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
