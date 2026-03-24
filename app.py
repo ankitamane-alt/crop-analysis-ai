@@ -8,7 +8,12 @@ import os
 app = Flask(__name__, template_folder='templates', static_folder='static')
 
 # -------------------------------
-# Download model from Google Drive if not exists
+# Reduce TensorFlow logs
+# -------------------------------
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
+# -------------------------------
+# Download model if not exists
 # -------------------------------
 model_url = "https://drive.google.com/uc?export=download&id=1Icz6QF7OAWK8re8lNkmecVKcLUSbmlAq"
 
@@ -16,8 +21,21 @@ if not os.path.exists("model.h5"):
     print("Downloading model from Google Drive...")
     gdown.download(model_url, "model.h5", quiet=False)
 
-# Load the model
-model = tf.keras.models.load_model("model.h5")
+# -------------------------------
+# Load model safely (FIXED)
+# -------------------------------
+try:
+    from tensorflow.keras.layers import InputLayer
+
+    model = tf.keras.models.load_model(
+        "model.h5",
+        custom_objects={"InputLayer": InputLayer},
+        compile=False
+    )
+    print("✅ Model loaded successfully")
+
+except Exception as e:
+    print("❌ Error loading model:", e)
 
 # -------------------------------
 # Dataset classes
@@ -48,7 +66,6 @@ def home():
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    # Check if file part is present
     if 'file' not in request.files:
         return "No file uploaded"
 
@@ -57,27 +74,36 @@ def predict():
     if file.filename == '':
         return "No file selected"
 
-    # Save uploaded image
+    # Save image
+    if not os.path.exists("static"):
+        os.makedirs("static")
+
     filepath = os.path.join("static", file.filename)
     file.save(filepath)
 
-    # Preprocess image
-    img = Image.open(filepath)
+    # -------------------------------
+    # Image preprocessing (FIXED)
+    # -------------------------------
+    img = Image.open(filepath).convert('RGB')
     img = img.resize((224, 224))
     img = np.array(img) / 255.0
     img = np.expand_dims(img, axis=0)
 
-    # Predict
+    # -------------------------------
+    # Prediction
+    # -------------------------------
     prediction = model.predict(img)
     index = np.argmax(prediction)
     result = classes[index]
 
     confidence = round(float(np.max(prediction)) * 100, 2)
 
+    # -------------------------------
     # Damage estimation
+    # -------------------------------
     damage = 0 if "healthy" in result.lower() else round(confidence)
 
-    # Insurance risk level
+    # Risk level
     if damage == 0:
         risk = "Low"
     elif damage < 40:
@@ -87,7 +113,9 @@ def predict():
     else:
         risk = "Very High"
 
+    # -------------------------------
     # Treatment suggestions
+    # -------------------------------
     if "healthy" in result.lower():
         treatment = "No treatment required. Plant is healthy."
     elif "blight" in result.lower():
@@ -111,8 +139,8 @@ def predict():
 
 
 # -------------------------------
-# Run the app
+# Run App (Render FIX)
 # -------------------------------
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
+    app.run(host='0.0.0.0', port=port)
