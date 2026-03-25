@@ -2,121 +2,111 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>AI-Based Real-Time Crop Image Analytics for Crop Insurance</title>
+<title>AI-Based Crop Image Analytics</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
 <style>
-
-body{
-margin:0;
-font-family:'Segoe UI',sans-serif;
-background:linear-gradient(135deg,#2E7D32,#66BB6A);
-display:flex;
-justify-content:center;
-align-items:center;
-height:100vh;
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg,#2E7D32,#66BB6A);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
 }
 
-.card{
-background:white;
-width:600px;
-padding:40px;
-border-radius:20px;
-box-shadow:0 15px 35px rgba(0,0,0,0.3);
-text-align:center;
+.card {
+    background: white;
+    width: 600px;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+    text-align: center;
 }
 
-h1{
-margin-bottom:20px;
-color:#2E7D32;
+h1 {
+    margin-bottom: 20px;
+    color: #2E7D32;
 }
 
-input[type="file"]{
-padding:10px;
-margin:15px 0;
+input[type="file"] {
+    padding: 10px;
+    margin: 15px 0;
 }
 
-button{
-background-color:#2E7D32;
-color:white;
-border:none;
-padding:12px 25px;
-border-radius:8px;
-font-size:16px;
-cursor:pointer;
-transition:0.3s;
+button {
+    background-color: #2E7D32;
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.3s;
 }
 
-button:hover{
-background-color:#1B5E20;
-transform:scale(1.05);
+button:hover {
+    background-color: #1B5E20;
+    transform: scale(1.05);
 }
 
-.result-box{
-margin-top:25px;
-padding:20px;
-background:#F1F8E9;
-border-radius:10px;
+.result-box {
+    margin-top: 25px;
+    padding: 20px;
+    background: #F1F8E9;
+    border-radius: 10px;
 }
 
-.disease{
-font-size:22px;
-font-weight:bold;
-color:#D32F2F;
+.disease {
+    font-size: 22px;
+    font-weight: bold;
+    color: #D32F2F;
 }
 
-.healthy{
-color:#2E7D32;
+.healthy {
+    color: #2E7D32;
 }
 
-img{
-margin-top:15px;
-max-width:100%;
-border-radius:12px;
-box-shadow:0 5px 15px rgba(0,0,0,0.2);
+img {
+    margin-top: 15px;
+    max-width: 100%;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
 }
 
-footer{
-margin-top:20px;
-font-size:14px;
-color:gray;
+footer {
+    margin-top: 20px;
+    font-size: 14px;
+    color: gray;
 }
-
 </style>
 </head>
-
 <body>
 
 <div class="card">
 
 <h1>🌾 AI-Based Real-Time Crop Image Analytics</h1>
 
-<form action="/predict" method="POST" enctype="multipart/form-data">
-
-<input type="file" name="file" required>
-
-<br><br>
-
-<button type="submit">Analyze Plant</button>
-
+<form action="/" method="POST" enctype="multipart/form-data">
+    <input type="file" name="file" required>
+    <br><br>
+    <button type="submit">Analyze Plant</button>
 </form>
 
 {% if prediction %}
-
 <div class="result-box">
+    {% if "healthy" in prediction.lower() %}
+        <p class="disease healthy">Plant Status: {{ prediction }}</p>
+    {% else %}
+        <p class="disease">Detected Disease: {{ prediction }}</p>
+    {% endif %}
 
-{% if "healthy" in prediction.lower() %}
-<p class="disease healthy">Plant Status: {{ prediction }}</p>
-{% else %}
-<p class="disease">Detected Disease: {{ prediction }}</p>
-{% endif %}
+    <p>Confidence: {{ confidence }}%</p>
 
-{% if image %}
-<img src="{{ image }}">
-{% endif %}
-
+    {% if image %}
+        <img src="{{ image }}">
+    {% endif %}
 </div>
-
 {% endif %}
 
 <footer>
