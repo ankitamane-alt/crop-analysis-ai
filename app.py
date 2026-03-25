@@ -21,12 +21,14 @@ def predict():
 
     result, confidence = predict_image(filepath)
 
+    # Make sure parentheses match and indentation is correct
     return render_template(
-    "result.html",
-    prediction=result,
-    confidence=round(confidence,2),
-    image='/' + filepath
+        "result.html",
+        prediction=result,
+        confidence=round(confidence, 2),
+        image='/' + filepath
     )
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
