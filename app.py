@@ -26,7 +26,6 @@ def predict():
     prediction=result,
     confidence=round(confidence,2),
     image='/' + filepath
- )
     )
 
 if __name__ == "__main__":
