@@ -22,10 +22,11 @@ def predict():
     result, confidence = predict_image(filepath)
 
     return render_template(
-        "result.html",
-        prediction=result,
-        confidence=round(confidence,2),
-        image=filepath
+    "result.html",
+    prediction=result,
+    confidence=round(confidence,2),
+    image='/' + filepath
+ )
     )
 
 if __name__ == "__main__":
