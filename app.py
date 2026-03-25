@@ -4,29 +4,29 @@ from model import predict_image
 
 app = Flask(__name__)
 
-@app.route('/')
+@app.route('/', methods=['GET', 'POST'])
 def home():
-    return render_template('index.html')
+    prediction = None
+    confidence = None
+    image_path = None
 
+    if request.method == 'POST':
+        file = request.files['file']
 
-@app.route('/predict', methods=['POST'])
-def predict():
-    file = request.files['file']
+        if not os.path.exists("static"):
+            os.makedirs("static")
 
-    if not os.path.exists("static"):
-        os.makedirs("static")
+        filepath = os.path.join("static", file.filename)
+        file.save(filepath)
 
-    filepath = os.path.join("static", file.filename)
-    file.save(filepath)
+        prediction, confidence = predict_image(filepath)
+        image_path = '/' + filepath
 
-    result, confidence = predict_image(filepath)
-
-    # Make sure parentheses match and indentation is correct
     return render_template(
-        "result.html",
-        prediction=result,
-        confidence=round(confidence, 2),
-        image='/' + filepath
+        "index.html",
+        prediction=prediction,
+        confidence=round(confidence, 2) if confidence else None,
+        image=image_path
     )
 
 
