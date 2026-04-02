@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Analysis Result</title>
+
+<style>
+
+body{
+margin:0;
+font-family:'Segoe UI',sans-serif;
+background:linear-gradient(135deg,#1B5E20,#66BB6A);
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+}
+
+.card{
+background:white;
+padding:35px;
+width:700px;
+border-radius:20px;
+box-shadow:0 20px 50px rgba(0,0,0,0.3);
+text-align:center;
+animation:fadeIn 0.8s ease;
+}
+
+@keyframes fadeIn{
+from{opacity:0; transform:translateY(20px);}
+to{opacity:1; transform:translateY(0);}
+}
+
+h1{
+color:#2E7D32;
+}
+
+.grid{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:15px;
+margin-top:20px;
+}
+
+.box{
+background:#F1F8E9;
+padding:15px;
+border-radius:12px;
+box-shadow:0 3px 10px rgba(0,0,0,0.1);
+}
+
+.box b{
+color:#1B5E20;
+}
+
+img{
+margin-top:20px;
+width:320px;
+border-radius:12px;
+box-shadow:0 5px 15px rgba(0,0,0,0.2);
+}
+
+button{
+margin-top:20px;
+padding:12px 25px;
+background:linear-gradient(45deg,#2E7D32,#66BB6A);
+color:white;
+border:none;
+border-radius:8px;
+cursor:pointer;
+font-size:15px;
+}
+
+button:hover{
+transform:scale(1.05);
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="card">
+
+<h1>🌾 Crop Analysis Result</h1>
+
+<div class="grid">
+
+<div class="box">
+<b>Disease</b><br>
+{{ prediction }}
+</div>
+
+<div class="box">
+<b>Damage</b><br>
+{{ damage }}%
+</div>
+
+<div class="box">
+<b>Confidence</b><br>
+{{ confidence }}%
+</div>
+
+<div class="box">
+<b>Insurance Risk</b><br>
+{{ risk }}
+</div>
+
+<div class="box" style="grid-column: span 2;">
+<b>Suggested Treatment</b><br>
+{{ treatment }}
+</div>
+
+</div>
+
+<img src="{{ image }}">
+
+<br>
+
+<a href="/">
+<button>Analyze Another Plant</button>
+</a>
+
+</div>
+
+</body>
+</html>
