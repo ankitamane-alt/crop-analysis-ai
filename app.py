@@ -3,11 +3,22 @@ import tensorflow as tf
 import numpy as np
 from PIL import Image
 import os
+import gdown
 
 app = Flask(__name__)
 
+# -----------------------------
+# Download model from Google Drive
+# -----------------------------
+MODEL_PATH = "model.h5"
+
+if not os.path.exists(MODEL_PATH):
+    file_id = "1Icz6QF7OAWK8re8lNkmecVKcLUSbmlAq"
+    url = f"https://drive.google.com/uc?id={file_id}"
+    gdown.download(url, MODEL_PATH, quiet=False)
+
 # Load trained model
-model = tf.keras.models.load_model("model.h5")
+model = tf.keras.models.load_model(MODEL_PATH)
 
 # Dataset classes
 classes = [
@@ -51,12 +62,11 @@ classes = [
 "Tomato___Tomato_Yellow_Leaf_Curl_Virus"
 ]
 
-# Home page
 @app.route('/')
 def home():
     return render_template('index.html')
 
-# Prediction
+
 @app.route('/predict', methods=['POST'])
 def predict():
 
@@ -68,31 +78,28 @@ def predict():
     if file.filename == '':
         return "No file selected"
 
-    # Save uploaded image
     filepath = os.path.join("static", file.filename)
     file.save(filepath)
 
     try:
-        # Image preprocessing
         img = Image.open(filepath).convert("RGB")
         img = img.resize((224,224))
-        img = np.array(img) / 255.0
+        img = np.array(img)/255.0
         img = np.expand_dims(img, axis=0)
 
-        # Prediction
         prediction = model.predict(img, verbose=0)
 
         index = np.argmax(prediction)
         result = classes[index]
 
-        confidence = float(np.max(prediction)) * 100
-        confidence = round(confidence, 2)
+        confidence = float(np.max(prediction))*100
+        confidence = round(confidence,2)
 
-        # 🛑 Unknown image detection
+        # unknown detection
         top2 = np.sort(prediction[0])[-2:]
         difference = top2[1] - top2[0]
 
-        if confidence < 85 or difference < 0.15:
+        if confidence < 70 or difference < 0.05:
             return render_template(
                 "result.html",
                 prediction="Invalid / Unsupported Image",
@@ -103,13 +110,11 @@ def predict():
                 risk="Low"
             )
 
-        # Damage estimation
         if "healthy" in result.lower():
             damage = 0
         else:
             damage = round(confidence)
 
-        # Insurance risk
         if damage == 0:
             risk = "Low"
         elif damage < 40:
@@ -119,7 +124,6 @@ def predict():
         else:
             risk = "Very High"
 
-        # Treatment
         if "healthy" in result.lower():
             treatment = "No treatment required. Plant is healthy."
         elif "blight" in result.lower():
@@ -129,7 +133,7 @@ def predict():
         elif "mildew" in result.lower():
             treatment = "Improve air circulation and apply fungicide."
         else:
-            treatment = "Consult agricultural expert for treatment."
+            treatment = "Consult agricultural expert."
 
         return render_template(
             "result.html",
@@ -151,6 +155,7 @@ def predict():
             treatment="Upload valid crop image.",
             risk="Low"
         )
+
 
 if __name__ == "__main__":
     app.run(debug=True)
