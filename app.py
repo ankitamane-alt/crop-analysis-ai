@@ -1,32 +1,156 @@
 from flask import Flask, render_template, request
+import tensorflow as tf
+import numpy as np
+from PIL import Image
 import os
-from model import predict_image
 
 app = Flask(__name__)
 
-@app.route('/', methods=['GET', 'POST'])
+# Load trained model
+model = tf.keras.models.load_model("model.h5")
+
+# Dataset classes
+classes = [
+"Apple___Apple_scab",
+"Apple___Black_rot",
+"Apple___Cedar_apple_rust",
+"Apple___healthy",
+"Blueberry___healthy",
+"Cherry_(including_sour)___healthy",
+"Cherry_(including_sour)___Powdery_mildew",
+"Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot",
+"Corn_(maize)___Common_rust_",
+"Corn_(maize)___healthy",
+"Corn_(maize)___Northern_Leaf_Blight",
+"Grape___Black_rot",
+"Grape___Esca_(Black_Measles)",
+"Grape___healthy",
+"Grape___Leaf_blight_(Isariopsis_Leaf_Spot)",
+"Orange___Haunglongbing_(Citrus_greening)",
+"Peach___Bacterial_spot",
+"Peach___healthy",
+"Pepper,_bell___Bacterial_spot",
+"Pepper,_bell___healthy",
+"Potato___Early_blight",
+"Potato___healthy",
+"Potato___Late_blight",
+"Raspberry___healthy",
+"Soybean___healthy",
+"Squash___Powdery_mildew",
+"Strawberry___healthy",
+"Strawberry___Leaf_scorch",
+"Tomato___Bacterial_spot",
+"Tomato___Early_blight",
+"Tomato___healthy",
+"Tomato___Late_blight",
+"Tomato___Leaf_Mold",
+"Tomato___Septoria_leaf_spot",
+"Tomato___Spider_mites Two-spotted_spider_mite",
+"Tomato___Target_Spot",
+"Tomato___Tomato_mosaic_virus",
+"Tomato___Tomato_Yellow_Leaf_Curl_Virus"
+]
+
+# Home page
+@app.route('/')
 def home():
-    prediction = None
-    confidence = None
-    image_path = None
+    return render_template('index.html')
 
-    if request.method == 'POST':
-        file = request.files['file']
+# Prediction
+@app.route('/predict', methods=['POST'])
+def predict():
 
-        if not os.path.exists("static"):
-            os.makedirs("static")
+    if 'file' not in request.files:
+        return "No file uploaded"
 
-        filepath = os.path.join("static", file.filename)
-        file.save(filepath)
+    file = request.files['file']
 
-        prediction, confidence = predict_image(filepath)
-        image_path = '/' + filepath
+    if file.filename == '':
+        return "No file selected"
 
-    return render_template(
-        "index.html",
-        prediction=prediction,
-        confidence=round(confidence, 2) if confidence else None,
-        image=image_path
-    )
+    # Save uploaded image
+    filepath = os.path.join("static", file.filename)
+    file.save(filepath)
 
+    try:
+        # Image preprocessing
+        img = Image.open(filepath).convert("RGB")
+        img = img.resize((224,224))
+        img = np.array(img) / 255.0
+        img = np.expand_dims(img, axis=0)
 
+        # Prediction
+        prediction = model.predict(img, verbose=0)
+
+        index = np.argmax(prediction)
+        result = classes[index]
+
+        confidence = float(np.max(prediction)) * 100
+        confidence = round(confidence, 2)
+
+        # 🛑 Unknown image detection
+        top2 = np.sort(prediction[0])[-2:]
+        difference = top2[1] - top2[0]
+
+        if confidence < 85 or difference < 0.15:
+            return render_template(
+                "result.html",
+                prediction="Invalid / Unsupported Image",
+                image=filepath,
+                damage=0,
+                confidence=confidence,
+                treatment="Upload clear crop leaf image only.",
+                risk="Low"
+            )
+
+        # Damage estimation
+        if "healthy" in result.lower():
+            damage = 0
+        else:
+            damage = round(confidence)
+
+        # Insurance risk
+        if damage == 0:
+            risk = "Low"
+        elif damage < 40:
+            risk = "Moderate"
+        elif damage < 70:
+            risk = "High"
+        else:
+            risk = "Very High"
+
+        # Treatment
+        if "healthy" in result.lower():
+            treatment = "No treatment required. Plant is healthy."
+        elif "blight" in result.lower():
+            treatment = "Apply fungicide spray and remove infected leaves."
+        elif "rust" in result.lower():
+            treatment = "Use sulfur-based fungicide."
+        elif "mildew" in result.lower():
+            treatment = "Improve air circulation and apply fungicide."
+        else:
+            treatment = "Consult agricultural expert for treatment."
+
+        return render_template(
+            "result.html",
+            prediction=result,
+            image=filepath,
+            damage=damage,
+            confidence=confidence,
+            treatment=treatment,
+            risk=risk
+        )
+
+    except:
+        return render_template(
+            "result.html",
+            prediction="Error processing image",
+            image=filepath,
+            damage=0,
+            confidence=0,
+            treatment="Upload valid crop image.",
+            risk="Low"
+        )
+
+if __name__ == "__main__":
+    app.run(debug=True)
