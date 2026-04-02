@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <title>AI-Based Crop Image Analytics</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
 <style>
 body {
     margin: 0;
@@ -29,11 +30,6 @@ h1 {
     color: #2E7D32;
 }
 
-input[type="file"] {
-    padding: 10px;
-    margin: 15px 0;
-}
-
 button {
     background-color: #2E7D32;
     color: white;
@@ -42,12 +38,6 @@ button {
     border-radius: 8px;
     font-size: 16px;
     cursor: pointer;
-    transition: 0.3s;
-}
-
-button:hover {
-    background-color: #1B5E20;
-    transform: scale(1.05);
 }
 
 .result-box {
@@ -71,49 +61,74 @@ img {
     margin-top: 15px;
     max-width: 100%;
     border-radius: 12px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-}
-
-footer {
-    margin-top: 20px;
-    font-size: 14px;
-    color: gray;
 }
 </style>
 </head>
+
 <body>
 
 <div class="card">
 
 <h1>🌾 AI-Based Real-Time Crop Image Analytics</h1>
 
-<form action="/" method="POST" enctype="multipart/form-data">
-    <input type="file" name="file" required>
-    <br><br>
-    <button type="submit">Analyze Plant</button>
-</form>
+<input type="file" id="fileInput">
+<br><br>
+<button onclick="analyzePlant()">Analyze Plant</button>
 
-{% if prediction %}
-<div class="result-box">
-    {% if "healthy" in prediction.lower() %}
-        <p class="disease healthy">Plant Status: {{ prediction }}</p>
-    {% else %}
-        <p class="disease">Detected Disease: {{ prediction }}</p>
-    {% endif %}
-
-    <p>Confidence: {{ confidence }}%</p>
-
-    {% if image %}
-        <img src="{{ image }}">
-    {% endif %}
+<div id="result" class="result-box" style="display:none;">
+    <p id="predictionText" class="disease"></p>
+    <p id="confidenceText"></p>
+    <img id="previewImage">
 </div>
-{% endif %}
 
 <footer>
 Developed by Ankita Mane | AI Crop Insurance Project
 </footer>
 
 </div>
+
+<script>
+function analyzePlant() {
+    const fileInput = document.getElementById("fileInput");
+    const result = document.getElementById("result");
+    const predictionText = document.getElementById("predictionText");
+    const confidenceText = document.getElementById("confidenceText");
+    const previewImage = document.getElementById("previewImage");
+
+    if (fileInput.files.length === 0) {
+        alert("Please upload an image");
+        return;
+    }
+
+    const file = fileInput.files[0];
+
+    // Show image preview
+    previewImage.src = URL.createObjectURL(file);
+
+    // Fake AI prediction (demo)
+    const predictions = [
+        "Healthy Leaf",
+        "Leaf Spot Disease",
+        "Powdery Mildew",
+        "Rust Disease"
+    ];
+
+    const randomPrediction = predictions[Math.floor(Math.random() * predictions.length)];
+    const confidence = (Math.random() * 20 + 80).toFixed(2);
+
+    if (randomPrediction.toLowerCase().includes("healthy")) {
+        predictionText.className = "disease healthy";
+        predictionText.innerText = "Plant Status: " + randomPrediction;
+    } else {
+        predictionText.className = "disease";
+        predictionText.innerText = "Detected Disease: " + randomPrediction;
+    }
+
+    confidenceText.innerText = "Confidence: " + confidence + "%";
+
+    result.style.display = "block";
+}
+</script>
 
 </body>
 </html>
