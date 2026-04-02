@@ -10,7 +10,7 @@ body{
 margin:0;
 font-family:'Segoe UI',sans-serif;
 background:linear-gradient(135deg,#1B5E20,#66BB6A);
-height:100vh;
+min-height:100vh;
 display:flex;
 justify-content:center;
 align-items:center;
@@ -18,26 +18,23 @@ align-items:center;
 
 .container{
 background:white;
-padding:40px;
+padding:30px;
 width:650px;
 border-radius:20px;
 text-align:center;
 box-shadow:0 20px 50px rgba(0,0,0,0.25);
 }
 
-h1{
-color:#2E7D32;
-margin-bottom:10px;
-}
+h1{ color:#2E7D32; }
 
 .subtitle{
 color:gray;
-margin-bottom:25px;
+margin-bottom:20px;
 }
 
 .upload-box{
 border:2px dashed #66BB6A;
-padding:25px;
+padding:20px;
 border-radius:15px;
 background:#F1F8E9;
 cursor:pointer;
@@ -48,20 +45,38 @@ display:none;
 }
 
 button{
-margin-top:20px;
+margin-top:15px;
 background:linear-gradient(45deg,#2E7D32,#66BB6A);
 color:white;
 border:none;
-padding:14px 30px;
-border-radius:10px;
-font-size:16px;
+padding:12px 25px;
+border-radius:8px;
 cursor:pointer;
 }
 
-footer{
-margin-top:20px;
-font-size:13px;
-color:gray;
+.result{
+display:none;
+margin-top:25px;
+}
+
+.grid{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:12px;
+margin-top:15px;
+}
+
+.box{
+background:#F1F8E9;
+padding:12px;
+border-radius:10px;
+}
+
+img{
+margin-top:15px;
+width:250px;
+border-radius:12px;
+box-shadow:0 5px 15px rgba(0,0,0,0.2);
 }
 </style>
 </head>
@@ -79,17 +94,53 @@ color:gray;
 </label>
 
 <br>
+<button onclick="analyze()">Analyze Crop</button>
 
-<button onclick="analyzeCrop()">Analyze Crop</button>
+<!-- RESULT -->
+<div class="result" id="resultBox">
 
-<footer>
-Developed by Ankita Mane
-</footer>
+<h2>🌱 Crop Analysis Result</h2>
+
+<div class="grid">
+
+<div class="box">
+<b>Disease</b><br>
+<span id="disease"></span>
+</div>
+
+<div class="box">
+<b>Damage</b><br>
+<span id="damage"></span>%
+</div>
+
+<div class="box">
+<b>Confidence</b><br>
+<span id="confidence"></span>%
+</div>
+
+<div class="box">
+<b>Insurance Risk</b><br>
+<span id="risk"></span>
+</div>
+
+<div class="box" style="grid-column: span 2;">
+<b>Suggested Treatment</b><br>
+<span id="treatment"></span>
+</div>
+
+</div>
+
+<img id="preview">
+
+<br>
+<button onclick="resetPage()">Analyze Another Plant</button>
+
+</div>
 
 </div>
 
 <script>
-function analyzeCrop(){
+function analyze(){
 
 const fileInput = document.getElementById("fileInput");
 
@@ -99,14 +150,41 @@ return;
 }
 
 const file = fileInput.files[0];
-const imageURL = URL.createObjectURL(file);
+document.getElementById("preview").src = URL.createObjectURL(file);
 
-/* Save image for result page */
-localStorage.setItem("plantImage", imageURL);
+/* Demo AI Data */
+const diseases = [
+"Corn(maize)___Northern_Leaf_Blight",
+"Healthy Leaf",
+"Leaf Spot",
+"Rust Disease"
+];
 
-/* Redirect to result page */
-window.location.href = "result.html";
+const treatments = {
+"Corn(maize)___Northern_Leaf_Blight":"Apply fungicide spray and remove infected leaves.",
+"Healthy Leaf":"No treatment required.",
+"Leaf Spot":"Use copper fungicide.",
+"Rust Disease":"Apply sulfur spray."
+};
 
+const disease = diseases[Math.floor(Math.random()*diseases.length)];
+const damage = Math.floor(Math.random()*50)+20;
+const confidence = (Math.random()*15+80).toFixed(2);
+const risk = damage > 40 ? "High" : "Low";
+const treatment = treatments[disease];
+
+/* Set values */
+document.getElementById("disease").innerText = disease;
+document.getElementById("damage").innerText = damage;
+document.getElementById("confidence").innerText = confidence;
+document.getElementById("risk").innerText = risk;
+document.getElementById("treatment").innerText = treatment;
+
+document.getElementById("resultBox").style.display="block";
+}
+
+function resetPage(){
+location.reload();
 }
 </script>
 
